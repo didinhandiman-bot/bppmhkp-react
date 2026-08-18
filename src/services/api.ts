@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Base URL backend Express
+// Ambil URL API dari file .env (Vite), atau gunakan default URL Production jika .env tidak diisi
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.bppmhkp.online/api';
+
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
