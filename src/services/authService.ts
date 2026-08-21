@@ -13,12 +13,12 @@ export interface UserProfile {
 }
 
 export const loginApi = async (credentials: LoginPayload) => {
-  const response = await API.post('/auth/login', credentials);
+  const response = await API.post('/login', credentials);
   return response.data; // Menerima { success, message, data: { token, user } }
 };
 
 export const getMeApi = async (): Promise<{ success: boolean; data: UserProfile }> => {
-  const response = await API.get('/auth/me');
+  const response = await API.get('/me');
   return response.data;
 };
 

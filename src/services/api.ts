@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Ambil URL API dari file .env (Vite), atau gunakan default URL Production jika .env tidak diisi
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.bppmhkp.online/api';
+const API_URL = import.meta.env.VITE_API_URL_AUTH || 'https://api.bppmhkp.online/auth';
 
 const API = axios.create({
   baseURL: API_URL,
