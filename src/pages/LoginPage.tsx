@@ -1,44 +1,48 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginApi } from '../services/authService';
+import { Captcha } from '../components/common/Captcha';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
 
-  // State untuk menampung input pengguna
+  // State Form
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // State untuk indikator proses dan pesan error
+  // State Captcha
+  const [generatedCaptcha, setGeneratedCaptcha] = useState('');
+  const [userCaptcha, setUserCaptcha] = useState('');
+
+  // State UI status
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Handler utama saat form di-submit
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // Mencegah reload halaman HTML bawaan
-    setLoading(true);    // Mengaktifkan status loading (tombol di-disable)
-    setErrorMessage(''); // Membersihkan pesan kesalahan sebelumnya
+    e.preventDefault();
+    setErrorMessage('');
+
+    // Validasi Captcha
+    if (userCaptcha !== generatedCaptcha) {
+      setErrorMessage('Kode CAPTCHA yang Anda masukkan salah!');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // 1. Memanggil API Backend Express melalui Axios
-      const res = await loginApi({ email, password });
+      const res = await loginApi({ email, password, captcha: userCaptcha });
 
-      // 2. Jika backend mengembalikan success = true
       if (res.success) {
-        // Simpan token JWT dan profil pengguna di browser
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
-
-        // Pindahkan pengguna ke halaman Dashboard
         navigate('/dashboard');
       }
     } catch (err: any) {
-      // 3. Tangkap pesan error dari backend Express (misal: "Email atau password salah!")
       const message =
         err.response?.data?.message || 'Gagal terhubung ke server backend';
       setErrorMessage(message);
     } finally {
-      // 4. Matikan status loading (baik sukses maupun gagal)
       setLoading(false);
     }
   };
@@ -47,7 +51,7 @@ export const LoginPage = () => {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-md max-w-md w-full space-y-6 border border-slate-200">
         
-        {/* Header Logo & Judul Form */}
+        {/* Header Logo & Judul */}
         <div className="text-center">
           <div className="inline-block bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-lg mb-3">
             BPPMHKP
@@ -58,7 +62,7 @@ export const LoginPage = () => {
           </p>
         </div>
 
-        {/* Kotak Pesan Kesalahan (Hanya muncul jika terjadi error) */}
+        {/* Pesan Error */}
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
             {errorMessage}
@@ -67,8 +71,6 @@ export const LoginPage = () => {
 
         {/* Form Login */}
         <form onSubmit={handleLogin} className="space-y-4">
-          
-          {/* Input Email */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Email
@@ -83,7 +85,6 @@ export const LoginPage = () => {
             />
           </div>
 
-          {/* Input Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Password
@@ -98,7 +99,13 @@ export const LoginPage = () => {
             />
           </div>
 
-          {/* Tombol Submit Login */}
+          {/* Reusable Captcha Component */}
+          <Captcha
+            onCaptchaChange={setGeneratedCaptcha}
+            value={userCaptcha}
+            onChange={setUserCaptcha}
+          />
+
           <button
             type="submit"
             disabled={loading}
