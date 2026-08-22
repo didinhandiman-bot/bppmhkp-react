@@ -1,170 +1,178 @@
-import React, { useEffect, useState } from 'react';
-import { getMeApi, type UserProfile } from '../services/authService';
+import { useState, useEffect } from 'react';
 
-// Interface Data Statistik Dashboard
-interface DashboardStats {
-  permohonanAktif: number;
-  sertifikatSelesai: number;
-  pengujianProsedur: number;
+// Interface tipe data aktivitas
+interface ActivityItem {
+  id: string;
+  layanan: string;
+  pemohon: string;
+  tanggal: string;
+  status: 'Diproses' | 'Disetujui' | 'Ditolak';
 }
-
-// Sub-komponen StatCard untuk modularitas & reusability
-interface StatCardProps {
-  title: string;
-  value: number;
-  textColor: string;
-  badgeBg: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, textColor, badgeBg }) => (
-  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-all">
-    <div className="flex justify-between items-start">
-      <span className="text-sm text-slate-500 font-medium">{title}</span>
-      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${badgeBg} ${textColor}`}>
-        Aktif
-      </span>
-    </div>
-    <p className={`text-3xl font-bold ${textColor} mt-3`}>{value}</p>
-  </div>
-);
 
 export const DashboardPage = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<DashboardStats>({
-    permohonanAktif: 0,
-    sertifikatSelesai: 0,
-    pengujianProsedur: 0,
-  });
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
 
-  // Fungsi Fetch Data dari API Backend
-  const loadDashboardData = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      // 1. Ambil Profil User Terautentikasi dari Express (GET /api/auth/me)
-      const resProfile = await getMeApi();
-      if (resProfile.success) {
-        setUser(resProfile.data);
-      }
-
-      // 2. Simulasi Data Statistik (Dapat diganti dengan endpoint API statistik backend nantinya)
-      setStats({
-        permohonanAktif: 12,
-        sertifikatSelesai: 48,
-        pengujianProsedur: 3,
-      });
-    } catch (err: any) {
-      const message = err.response?.data?.message || 'Gagal memuat data dari server backend.';
-      setError(message);
-    } finally {
+  // Data mock awal (bisa diganti dengan API dashboardService nanti)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setActivities([
+        {
+          id: 'REQ-001',
+          layanan: 'Sertifikasi Mutu',
+          pemohon: 'PT Fishery Utama',
+          tanggal: '2026-08-20',
+          status: 'Diproses',
+        },
+        {
+          id: 'REQ-002',
+          layanan: 'Izin Ekspor Hasil Laut',
+          pemohon: 'CV Bahari Nusantara',
+          tanggal: '2026-08-19',
+          status: 'Disetujui',
+        },
+        {
+          id: 'REQ-003',
+          layanan: 'Inspeksi Karantina',
+          pemohon: 'UD Sea Product',
+          tanggal: '2026-08-18',
+          status: 'Ditolak',
+        },
+        {
+          id: 'REQ-004',
+          layanan: 'Pengujian Laboratorium',
+          pemohon: 'PT Samudra Jaya',
+          tanggal: '2026-08-17',
+          status: 'Disetujui',
+        },
+      ]);
       setLoading(false);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Helper untuk warna badge status
+  const getStatusBadge = (status: ActivityItem['status']) => {
+    switch (status) {
+      case 'Disetujui':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'Diproses':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'Ditolak':
+        return 'bg-rose-100 text-rose-800 border-rose-200';
+      default:
+        return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  // 1. STATE LOADING (Skeleton Loader)
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        {/* Banner Skeleton */}
-        <div className="bg-slate-200 h-28 rounded-xl w-full"></div>
-
-        {/* Stat Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-200 h-32 rounded-xl"></div>
-          <div className="bg-slate-200 h-32 rounded-xl"></div>
-          <div className="bg-slate-200 h-32 rounded-xl"></div>
-        </div>
-
-        {/* Content Skeleton */}
-        <div className="bg-slate-200 h-48 rounded-xl w-full"></div>
-      </div>
-    );
-  }
-
-  // 2. STATE ERROR
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center space-y-4">
-        <h3 className="text-lg font-bold text-red-800">Terjadi Kesalahan</h3>
-        <p className="text-sm text-red-600">{error}</p>
-        <button
-          onClick={loadDashboardData}
-          className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-        >
-          Coba Muat Ulang
-        </button>
-      </div>
-    );
-  }
-
-  // 3. STATE UTAMA (Data Berhasil Dibuat)
   return (
     <div className="space-y-6">
-      {/* Welcome Card & User Profile Greeting */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-700 p-6 rounded-xl text-white shadow-md flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">
-            Selamat Datang, {user?.nama || 'Pengguna'}!
-          </h1>
-          <p className="text-blue-100 mt-1 text-sm">
-            Sistem Informasi Terpadu Layanan BPPMHKP • Role:{' '}
-            <span className="font-semibold capitalize">{user?.role || 'User'}</span>
-          </p>
+      {/* Header Halaman */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard Ringkasan</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Pantau status layanan dan pengajuan terkini di BPPMHKP.
+        </p>
+      </div>
+
+      {/* Ringkasan Statistik (Stat Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-sm font-medium text-slate-500">Total Pengajuan</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-3xl font-bold text-slate-800">128</span>
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+              +12%
+            </span>
+          </div>
         </div>
-        <div className="hidden sm:block text-right">
-          <span className="text-xs bg-blue-800/60 px-3 py-1.5 rounded-full border border-blue-400/30">
-            {user?.email}
-          </span>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-sm font-medium text-slate-500">Sedang Diproses</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-3xl font-bold text-amber-600">24</span>
+            <span className="text-xs font-medium text-slate-400">Aktif</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-sm font-medium text-slate-500">Disetujui</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-3xl font-bold text-emerald-600">96</span>
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+              75% Rate
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-sm font-medium text-slate-500">Ditolak</p>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-3xl font-bold text-rose-600">8</span>
+            <span className="text-xs font-medium text-slate-400">Revisi</span>
+          </div>
         </div>
       </div>
 
-      {/* Ringkasan Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          title="Permohonan Aktif"
-          value={stats.permohonanAktif}
-          textColor="text-blue-600"
-          badgeBg="bg-blue-50"
-        />
-        <StatCard
-          title="Sertifikat Selesai"
-          value={stats.sertifikatSelesai}
-          textColor="text-emerald-600"
-          badgeBg="bg-emerald-50"
-        />
-        <StatCard
-          title="Pengujian Prosedur"
-          value={stats.pengujianProsedur}
-          textColor="text-amber-600"
-          badgeBg="bg-amber-50"
-        />
-      </div>
+      {/* Tabel Aktivitas Terakhir */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="font-semibold text-slate-800">Aktivitas Pengajuan Terbaru</h2>
+          <button className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            Lihat Semua
+          </button>
+        </div>
 
-      {/* Section Ringkasan Aktivitas Terbaru */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">Aktivitas Terkini</h2>
-        <div className="divide-y divide-slate-100">
-          <div className="py-3 flex justify-between items-center text-sm">
-            <div>
-              <p className="font-medium text-slate-800">Pengajuan Sertifikasi Mutu #0942</p>
-              <p className="text-xs text-slate-500">Diverifikasi oleh tim teknis</p>
-            </div>
-            <span className="text-xs text-slate-400">Hari ini, 10:45</span>
-          </div>
-          <div className="py-3 flex justify-between items-center text-sm">
-            <div>
-              <p className="font-medium text-slate-800">Pembaruan Dokumen Pengujian #0811</p>
-              <p className="text-xs text-slate-500">Status berubah ke "Selesai"</p>
-            </div>
-            <span className="text-xs text-slate-400">Kemarin, 14:20</span>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+                <th className="py-3 px-4">ID Transaksi</th>
+                <th className="py-3 px-4">Jenis Layanan</th>
+                <th className="py-3 px-4">Pemohon</th>
+                <th className="py-3 px-4">Tanggal</th>
+                <th className="py-3 px-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    Memuat data aktivitas...
+                  </td>
+                </tr>
+              ) : activities.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    Belum ada aktivitas transaksi.
+                  </td>
+                </tr>
+              ) : (
+                activities.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4 font-mono font-medium text-slate-700">
+                      {item.id}
+                    </td>
+                    <td className="py-3 px-4 font-medium text-slate-800">
+                      {item.layanan}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600">{item.pemohon}</td>
+                    <td className="py-3 px-4 text-slate-500">{item.tanggal}</td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-block px-2.5 py-1 text-xs font-semibold rounded-md border ${getStatusBadge(
+                          item.status
+                        )}`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
