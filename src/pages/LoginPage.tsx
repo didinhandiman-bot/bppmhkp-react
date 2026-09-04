@@ -31,7 +31,10 @@ export const LoginPage = () => {
     setLoading(true);
 
     try {
-      const res = await loginApi({ email, password, captcha: userCaptcha });
+      // const res = await loginApi({ email, password, captcha: userCaptcha });
+      
+      // Kirim sebagai type assertion ( bypass sementara pembatasan tipe )  
+      const res = await loginApi({ email, password, captcha: userCaptcha } as any);
 
       if (res.success) {
         localStorage.setItem('token', res.data.token);
